@@ -1,16 +1,14 @@
 const bcrypt = require('bcryptjs');
 
 const users = [
-  { username: 'shree', rawPass: 'shree123' },
-  { username: 'sanjay', rawPass: 'sanjay123' },
-  { username: 'niranjan', rawPass: 'niranjan123' }
+  { username: 'shree', rawPass: 'shreenigga123' },
+  { username: 'sanjay', rawPass: 'samurainightmare' },
+  { username: 'niranjan', rawPass: 'ninjaniranmoosik' }
 ];
 
-console.log('=== SECURE USER PASSWORDS & BCRYPT HASHES ===');
+console.log('=== SECURE BCRYPT HASH GENERATION ===');
 users.forEach(u => {
   const hash = bcrypt.hashSync(u.rawPass, 10);
-  console.log(`User: ${u.username}`);
-  console.log(`Password: ${u.rawPass}`);
+  console.log(`Username: ${u.username}`);
   console.log(`Hash: ${hash}`);
-  console.log('-------------------------------------------');
 });
