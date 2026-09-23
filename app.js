@@ -152,11 +152,19 @@ document.addEventListener('DOMContentLoaded', () => {
   invoiceDateInput.value = today;
   dueDateInput.value = due;
 
-  // Initialize Default Sample Items
+  // Profit Multiplier: 7.5% markup
+  const PROFIT_MULTIPLIER = 1.075;
+
+  // Helper: calculate selling price from cost price
+  function sellingPrice(costPrice) {
+    return (costPrice || 0) * PROFIT_MULTIPLIER;
+  }
+
+  // Initialize Default Sample Items (costPrice = cost, price auto-calculated)
   const sampleItems = [
-    { name: 'Robo Arm Cybernetic Joint v2', qty: 2, price: 2499.00 },
-    { name: 'AI Vision Processor Chipset', qty: 1, price: 1250.00 },
-    { name: 'Robotics Maintenance & Calibration', qty: 3, price: 350.00 }
+    { name: 'Robo Arm Cybernetic Joint v2', qty: 2, costPrice: 2499.00 },
+    { name: 'AI Vision Processor Chipset', qty: 1, costPrice: 1250.00 },
+    { name: 'Robotics Maintenance & Calibration', qty: 3, costPrice: 350.00 }
   ];
 
   // Helper: Format Currency
@@ -178,19 +186,28 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPreview();
   }
 
-  // Render Form Items Row
+  // Render Form Items Row (costPrice input → selling price auto-calculated, only selling shown on bill)
   function renderItemRows() {
     itemsEditorList.innerHTML = '';
     items.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'item-row';
-      const itemTotal = (item.qty || 0) * (item.price || 0);
+      row.className = 'item-row item-row-extended';
+      const cost = item.costPrice || 0;
+      const sell = sellingPrice(cost);
+      const rowTotal = (item.qty || 0) * sell;
 
       row.innerHTML = `
         <input type="text" class="form-control item-name-input" placeholder="Item Name" value="${item.name || ''}" data-index="${index}">
         <input type="number" class="form-control item-qty-input" placeholder="Qty" min="1" value="${item.qty ?? 1}" data-index="${index}">
-        <input type="number" class="form-control item-price-input" placeholder="Price" min="0" step="0.01" value="${item.price ?? 0}" data-index="${index}">
-        <div class="item-row-total">${formatMoney(itemTotal)}</div>
+        <div class="item-cost-group">
+          <label class="item-sub-label">Cost Price</label>
+          <input type="number" class="form-control item-cost-input" placeholder="Cost" min="0" step="0.01" value="${cost}" data-index="${index}">
+        </div>
+        <div class="item-sell-group">
+          <label class="item-sub-label">Selling Price <span class="profit-tag">+7.5%</span></label>
+          <div class="item-sell-display">${formatMoney(sell)}</div>
+        </div>
+        <div class="item-row-total">${formatMoney(rowTotal)}</div>
         <button type="button" class="btn-remove-item" data-index="${index}" title="Remove Item">
           <i class="fa-solid fa-trash"></i>
         </button>
@@ -216,10 +233,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    document.querySelectorAll('.item-price-input').forEach(input => {
+    document.querySelectorAll('.item-cost-input').forEach(input => {
       input.addEventListener('input', (e) => {
         const idx = e.target.dataset.index;
-        items[idx].price = parseFloat(e.target.value) || 0;
+        items[idx].costPrice = parseFloat(e.target.value) || 0;
         updateItemRowTotal(idx);
         renderPreview();
       });
@@ -239,9 +256,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const rows = itemsEditorList.querySelectorAll('.item-row');
     if (rows[index]) {
       const item = items[index];
-      const itemTotal = (item.qty || 0) * (item.price || 0);
+      const sell = sellingPrice(item.costPrice || 0);
+      const rowTotal = (item.qty || 0) * sell;
+      // Update sell price display
+      const sellEl = rows[index].querySelector('.item-sell-display');
+      if (sellEl) sellEl.textContent = formatMoney(sell);
+      // Update row total
       const totalEl = rows[index].querySelector('.item-row-total');
-      if (totalEl) totalEl.textContent = formatMoney(itemTotal);
+      if (totalEl) totalEl.textContent = formatMoney(rowTotal);
     }
   }
 
@@ -277,7 +299,9 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     } else {
       items.forEach((item, idx) => {
-        const lineTotal = (item.qty || 0) * (item.price || 0);
+        // Bill always uses SELLING price (cost price never shown on bill)
+        const sell = sellingPrice(item.costPrice || 0);
+        const lineTotal = (item.qty || 0) * sell;
         subtotal += lineTotal;
 
         const tr = document.createElement('tr');
@@ -285,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${idx + 1}</td>
           <td><strong>${escapeHtml(item.name || 'Unnamed Item')}</strong></td>
           <td style="text-align: center;">${item.qty || 0}</td>
-          <td style="text-align: right;">${formatMoney(item.price || 0)}</td>
+          <td style="text-align: right;">${formatMoney(sell)}</td>
           <td style="text-align: right;"><strong>${formatMoney(lineTotal)}</strong></td>
         `;
         prevItemsBody.appendChild(tr);
