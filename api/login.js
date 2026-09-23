@@ -4,23 +4,25 @@ const cookie = require('cookie');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'gorobo_super_secret_jwt_key_2026';
 
-// Multi-user database configuration (Can also be overridden via environment variables in Vercel)
-// Default credentials provided (shree: shree123, sanjay: sanjay123, niranjan: niranjan123)
+// Multi-user database — passwords are bcrypt hashed (saltRounds=10)
 const USERS_DB = {
   shree: {
     name: 'Shree',
     username: 'shree',
-    passwordHash: process.env.SHREE_PASSWORD_HASH || bcrypt.hashSync('shree123', 10)
+    billingName: 'Shree',
+    passwordHash: process.env.SHREE_PASSWORD_HASH || '$2a$10$arwoXkny.9w1fex0nPzf3.d5cziTIo8ZFF.MZLoPmWOJPVKWF3Fzm'
   },
   sanjay: {
     name: 'Sanjay',
     username: 'sanjay',
-    passwordHash: process.env.SANJAY_PASSWORD_HASH || bcrypt.hashSync('sanjay123', 10)
+    billingName: 'Sanjay',
+    passwordHash: process.env.SANJAY_PASSWORD_HASH || '$2a$10$nAYWqyjtRHic72LYcrgrb.i8miEFkJA7xzdVfLut7M12i/gHZzcXu'
   },
   niranjan: {
     name: 'Niranjan',
     username: 'niranjan',
-    passwordHash: process.env.NIRANJAN_PASSWORD_HASH || bcrypt.hashSync('niranjan123', 10)
+    billingName: 'Niranjan',
+    passwordHash: process.env.NIRANJAN_PASSWORD_HASH || '$2a$10$mhWE.WduUOCTzO.yG4N14.o2wPjSPQC.fnF1MPUUnNKvzmPm0V5XO'
   }
 };
 
@@ -49,9 +51,9 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: 'Invalid password' });
     }
 
-    // Generate JWT token
+    // Generate JWT token (includes billingName for auto-fill)
     const token = jwt.sign(
-      { username: user.username, name: user.name },
+      { username: user.username, name: user.name, billingName: user.billingName },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -67,7 +69,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      user: { username: user.username, name: user.name }
+      user: { username: user.username, name: user.name, billingName: user.billingName }
     });
   } catch (err) {
     console.error('Login error:', err);

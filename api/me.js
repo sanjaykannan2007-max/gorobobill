@@ -15,7 +15,7 @@ module.exports = async function handler(req, res) {
     const decoded = jwt.verify(token, JWT_SECRET);
     return res.status(200).json({
       authenticated: true,
-      user: { username: decoded.username, name: decoded.name }
+      user: { username: decoded.username, name: decoded.name, billingName: decoded.billingName }
     });
   } catch (err) {
     return res.status(401).json({ authenticated: false });

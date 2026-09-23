@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/me');
       const data = await res.json();
       if (data.authenticated && data.user) {
-        showApp(data.user.name);
+        showApp(data.user.name, data.user.billingName);
       } else {
         showLogin();
       }
@@ -34,10 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loginModal.style.display = 'flex';
   }
 
-  function showApp(userName) {
+  function showApp(userName, billingName) {
     loginModal.style.display = 'none';
     userBadge.style.display = 'inline-flex';
     userDisplayName.textContent = userName;
+    // Auto-fill the billing person name into the seller name field
+    if (billingName) {
+      const sellerNameEl = document.getElementById('seller-name');
+      if (sellerNameEl) sellerNameEl.value = billingName;
+    }
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -55,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        showApp(data.user.name);
+        showApp(data.user.name, data.user.billingName);
         authPassword.value = '';
       } else {
         authError.textContent = data.error || 'Invalid credentials';
