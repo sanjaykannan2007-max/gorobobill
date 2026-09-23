@@ -1,0 +1,14 @@
+{
+  "name": "go-robo-bill-generator",
+  "version": "1.0.0",
+  "description": "Smart Bill & Invoice Engine with Secure Vercel Authentication & Direct PDF Export",
+  "main": "api/login.js",
+  "scripts": {
+    "start": "node api/login.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie": "^0.6.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

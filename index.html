@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go Robo - Smart Bill Generator</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- html2pdf.js CDN for Direct Auto PDF Downloads -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login Overlay Modal -->
+  <div id="login-modal" class="auth-modal-overlay">
+    <div class="auth-modal-card">
+      <div class="auth-brand">
+        <div class="brand-logo-icon">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <h2>GO ROBO ENGINE</h2>
+        <p>Authorized Bill Generator Access</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group mb-3">
+          <label for="auth-username">Authorized User</label>
+          <select id="auth-username" class="form-control" required>
+            <option value="shree" selected>Shree</option>
+            <option value="sanjay">Sanjay</option>
+            <option value="niranjan">Niranjan</option>
+          </select>
+        </div>
+        <div class="form-group mb-4">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" class="form-control" placeholder="Enter secure password" required>
+        </div>
+        <div id="auth-error" class="auth-error-msg" style="display:none;"></div>
+        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-full">
+          <i class="fa-solid fa-right-to-bracket"></i> Login & Unlock Engine
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Header Navbar -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-logo-icon">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div class="brand-text">
+          <h1>GO ROBO</h1>
+          <span>Smart Bill & Invoice Engine</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div id="user-badge" class="user-status-badge" style="display:none;">
+          <i class="fa-solid fa-user-shield"></i> <span id="user-display-name">User</span>
+          <button id="btn-logout" class="btn-logout-icon" title="Logout"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+        <button id="btn-load-sample" class="btn btn-outline">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Load Sample Data
+        </button>
+        <button id="btn-reset" class="btn btn-ghost">
+          <i class="fa-solid fa-rotate-left"></i> Reset Form
+        </button>
+        <button id="btn-print" class="btn btn-primary">
+          <i class="fa-solid fa-file-arrow-down"></i> Download PDF
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container Split Screen -->
+  <main class="main-container">
+    <!-- Left Column: Form Controls -->
+    <section class="form-section">
+      <div class="card">
+        <h2 class="card-title"><i class="fa-solid fa-sliders"></i> Bill Details & Settings</h2>
+        
+        <!-- Logo & Branding Customization -->
+        <div class="form-group-block">
+          <label class="form-label">Brand Logo & Header</label>
+          <div class="logo-uploader-box">
+            <div class="current-logo-preview" id="form-logo-container">
+              <img src="assets/logo-placeholder.png" alt="Default Go Robo Logo">
+            </div>
+            <div class="upload-controls">
+              <label for="logo-input" class="btn btn-small btn-secondary">
+                <i class="fa-solid fa-upload"></i> Change Custom Logo
+              </label>
+              <input type="file" id="logo-input" accept="image/*" class="file-input-hidden">
+              <button id="btn-remove-logo" class="btn btn-small btn-ghost text-danger">
+                <i class="fa-solid fa-rotate-left"></i> Reset Default Logo
+              </button>
+              <p class="help-text">Default logo placeholder included automatically on every bill.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-grid dual-col">
+          <div class="form-group">
+            <label for="invoice-no">Invoice Number</label>
+            <input type="text" id="invoice-no" class="form-control" value="GR-2026-0891">
+          </div>
+          <div class="form-group">
+            <label for="currency-symbol">Currency Symbol</label>
+            <select id="currency-symbol" class="form-control">
+              <option value="$">$ (USD)</option>
+              <option value="₹" selected>₹ (INR)</option>
+              <option value="€">€ (EUR)</option>
+              <option value="£">£ (GBP)</option>
+              <option value="A$">A$ (AUD)</option>
+              <option value="AED">AED (Dirham)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid dual-col">
+          <div class="form-group">
+            <label for="invoice-date">Invoice Date</label>
+            <input type="date" id="invoice-date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="due-date">Due Date</label>
+            <input type="date" id="due-date" class="form-control">
+          </div>
+        </div>
+
+        <!-- Business & Customer Info -->
+        <div class="form-grid dual-col">
+          <div class="form-group">
+            <label><i class="fa-solid fa-building"></i> Billed From (Provider)</label>
+            <input type="text" id="seller-name" class="form-control" placeholder="Company Name" value="Go Robo Technologies">
+            <input type="text" id="seller-contact" class="form-control mt-2" placeholder="Phone / Email" value="+1 (800) 555-ROBO | support@gorobo.ai">
+            <textarea id="seller-address" class="form-control mt-2" rows="2" placeholder="Address">Building 4, Cyber City, Tech Hub, NY 10001</textarea>
+          </div>
+
+          <div class="form-group">
+            <label><i class="fa-solid fa-user"></i> Billed To (Customer)</label>
+            <input type="text" id="client-name" class="form-control" placeholder="Customer / Business Name" value="Alex Rivera">
+            <input type="text" id="client-contact" class="form-control mt-2" placeholder="Phone / Email" value="alex.rivera@example.com | +1 987-654-3210">
+            <textarea id="client-address" class="form-control mt-2" rows="2" placeholder="Address">742 Evergreen Terrace, Sector 5, Silicon Heights</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item Selection Section -->
+      <div class="card mt-4">
+        <div class="card-header-flex">
+          <h2 class="card-title"><i class="fa-solid fa-list-check"></i> Bill Items</h2>
+          <button id="btn-add-item" class="btn btn-small btn-success">
+            <i class="fa-solid fa-plus"></i> Add Item
+          </button>
+        </div>
+
+        <div class="items-editor-container" id="items-editor-list">
+          <!-- Item rows dynamically inserted by app.js -->
+        </div>
+      </div>
+
+      <!-- Charges & Discounts -->
+      <div class="card mt-4">
+        <h2 class="card-title"><i class="fa-solid fa-calculator"></i> Extra Charges & Adjustments</h2>
+        <div class="form-grid quad-col">
+          <div class="form-group">
+            <label for="delivery-charge">
+              <i class="fa-solid fa-truck-fast"></i> Delivery Charge
+            </label>
+            <div class="input-prefix-wrapper">
+              <span class="currency-prefix">₹</span>
+              <input type="number" id="delivery-charge" class="form-control prefix-padding" min="0" step="0.01" value="50">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="platform-charge">
+              <i class="fa-solid fa-microchip"></i> Platform Fee
+            </label>
+            <div class="input-prefix-wrapper">
+              <span class="currency-prefix">₹</span>
+              <input type="number" id="platform-charge" class="form-control prefix-padding" min="0" step="0.01" value="25">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="tax-rate">
+              <i class="fa-solid fa-percent"></i> Tax / GST (%)
+            </label>
+            <input type="number" id="tax-rate" class="form-control" min="0" max="100" step="0.1" value="18">
+          </div>
+
+          <div class="form-group">
+            <label for="discount-amount">
+              <i class="fa-solid fa-tag"></i> Discount
+            </label>
+            <div class="input-prefix-wrapper">
+              <span class="currency-prefix">₹</span>
+              <input type="number" id="discount-amount" class="form-control prefix-padding" min="0" step="0.01" value="100">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-3">
+          <label for="notes">Notes / Payment Instructions</label>
+          <textarea id="notes" class="form-control" rows="2" placeholder="Thank you for choosing Go Robo! Payment due within 15 days.">Thank you for choosing Go Robo Solutions! Payment can be made via UPI, Credit Card or Direct Bank Transfer.</textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Live Printable Preview -->
+    <section class="preview-section">
+      <div class="preview-sticky-wrapper">
+        <div class="preview-header-bar">
+          <span><i class="fa-solid fa-eye"></i> Live Invoice Preview</span>
+          <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Auto-Updated</span>
+        </div>
+
+        <!-- The actual invoice canvas that will be saved to PDF -->
+        <div class="invoice-paper" id="invoice-paper">
+          <!-- Top Header -->
+          <div class="invoice-header">
+            <div class="invoice-branding">
+              <div id="preview-logo-container" class="preview-logo">
+                <img src="assets/logo-placeholder.png" alt="Default Go Robo Logo">
+              </div>
+              <div class="invoice-seller-info mt-2">
+                <h3 id="prev-seller-name">Go Robo Technologies</h3>
+                <p id="prev-seller-address">Building 4, Cyber City, Tech Hub, NY 10001</p>
+                <p id="prev-seller-contact">+1 (800) 555-ROBO | support@gorobo.ai</p>
+              </div>
+            </div>
+            
+            <div class="invoice-meta">
+              <h2 class="invoice-title">INVOICE</h2>
+              <div class="meta-row">
+                <span class="meta-label">Invoice No:</span>
+                <span class="meta-value" id="prev-invoice-no">GR-2026-0891</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Date:</span>
+                <span class="meta-value" id="prev-invoice-date">2026-09-12</span>
+              </div>
+              <div class="meta-row">
+                <span class="meta-label">Due Date:</span>
+                <span class="meta-value" id="prev-due-date">2026-09-27</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="invoice-divider"></div>
+
+          <!-- Bill To Section -->
+          <div class="invoice-client-section">
+            <div class="client-box">
+              <span class="section-subtitle">BILLED TO</span>
+              <h4 id="prev-client-name">Alex Rivera</h4>
+              <p id="prev-client-address">742 Evergreen Terrace, Sector 5, Silicon Heights</p>
+              <p id="prev-client-contact">alex.rivera@example.com | +1 987-654-3210</p>
+            </div>
+          </div>
+
+          <!-- Items Table -->
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 45%;">Item Description</th>
+                <th style="width: 15%; text-align: center;">Qty</th>
+                <th style="width: 15%; text-align: right;">Unit Price</th>
+                <th style="width: 20%; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody id="prev-items-body">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+
+          <!-- Financial Calculation Breakdown -->
+          <div class="invoice-summary-wrapper">
+            <div class="invoice-notes">
+              <span class="section-subtitle">TERMS & NOTES</span>
+              <p id="prev-notes">Thank you for choosing Go Robo Solutions! Payment can be made via UPI, Credit Card or Direct Bank Transfer.</p>
+            </div>
+          </div>
+
+          <!-- Permanent Terms & Conditions -->
+          <div class="invoice-terms-container">
+            <span class="section-subtitle">TERMS & CONDITIONS</span>
+            <ol class="terms-list">
+              <li>Goods once sold are non-returnable unless damaged, defective, or incorrectly supplied.</li>
+              <li>Please verify the products and quantity at the time of delivery.</li>
+              <li>Report any damage, defect, or incorrect item within <strong>24 hours</strong> of delivery.</li>
+              <li>Warranty, if applicable, is subject to the manufacturer's terms and conditions.</li>
+              <li>GoRobo is not responsible for damage caused by incorrect usage, wiring, installation, voltage, or modification.</li>
+              <li>Delivery times are estimates and may vary due to circumstances beyond our control.</li>
+              <li>By placing an order, the customer agrees to these Terms & Conditions.</li>
+            </ol>
+          </div>
+
+            <div class="invoice-totals-table">
+              <div class="total-row">
+                <span>Items Subtotal:</span>
+                <strong id="prev-subtotal">₹0.00</strong>
+              </div>
+              <div class="total-row">
+                <span>Delivery Charge:</span>
+                <strong id="prev-delivery">₹0.00</strong>
+              </div>
+              <div class="total-row">
+                <span>Platform Charge:</span>
+                <strong id="prev-platform">₹0.00</strong>
+              </div>
+              <div class="total-row" id="row-tax">
+                <span>Tax (<span id="prev-tax-rate">18</span>%):</span>
+                <strong id="prev-tax-amount">₹0.00</strong>
+              </div>
+              <div class="total-row text-discount" id="row-discount">
+                <span>Discount:</span>
+                <strong id="prev-discount-amount">-₹0.00</strong>
+              </div>
+              <div class="total-row grand-total-row">
+                <span>Total Amount Due:</span>
+                <span class="grand-total-price" id="prev-grand-total">₹0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer Stamp / Watermark -->
+          <div class="invoice-footer">
+            <div class="footer-badge">
+              <i class="fa-solid fa-shield-halved"></i> Verified Electronic Invoice • Powered by <strong>Go Robo Engine</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
