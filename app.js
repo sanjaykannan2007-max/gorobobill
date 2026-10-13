@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnPrint = document.getElementById('btn-print');
   const btnReset = document.getElementById('btn-reset');
   const btnLoadSample = document.getElementById('btn-load-sample');
+  // New UI elements for bulk parsing and profit margin
+  const profitMarginInput = document.getElementById('profit-margin-input');
+  const bulkListTextarea = document.getElementById('bulk-item-list');
+  const btnParseItems = document.getElementById('btn-parse-items');
 
   // Initialize Default Dates
   const today = new Date().toISOString().split('T')[0];
@@ -152,12 +156,15 @@ document.addEventListener('DOMContentLoaded', () => {
   invoiceDateInput.value = today;
   dueDateInput.value = due;
 
-  // Profit Multiplier: 7.5% markup
-  const PROFIT_MULTIPLIER = 1.075;
+  // Profit margin percentage (default 7.5%)
+  let profitMargin = 7.5; // in percent
+  function getProfitMultiplier() {
+    return 1 + profitMargin / 100;
+  }
 
-  // Helper: calculate selling price from cost price
+  // Helper: calculate selling price from cost price using dynamic profit multiplier
   function sellingPrice(costPrice) {
-    return (costPrice || 0) * PROFIT_MULTIPLIER;
+    return (costPrice || 0) * getProfitMultiplier();
   }
 
   // Initialize Default Sample Items (costPrice = cost, price auto-calculated)
@@ -204,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <input type="number" class="form-control item-cost-input" placeholder="Cost" min="0" step="0.01" value="${cost}" data-index="${index}">
         </div>
         <div class="item-sell-group">
-          <label class="item-sub-label">Selling Price <span class="profit-tag">+7.5%</span></label>
+          <label class="item-sub-label">Selling Price <span class="profit-tag">+${profitMargin}%</span></label>
           <div class="item-sell-display">${formatMoney(sell)}</div>
         </div>
         <div class="item-row-total">${formatMoney(rowTotal)}</div>
@@ -399,6 +406,49 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPreview();
   });
 
+  // Profit margin UI handling
+  if (profitMarginInput) {
+    profitMarginInput.value = profitMargin;
+    profitMarginInput.addEventListener('input', (e) => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val >= 0) {
+        profitMargin = val;
+        renderItemRows();
+        renderPreview();
+      }
+    });
+  }
+
+  // Bulk list parsing
+  function parseBulkList(text) {
+    const lines = text.split(/\n|,/).map(l => l.trim()).filter(l => l.length);
+    const parsed = [];
+    const regex = /(.+?)\s*[-:]\s*([\d,.]+)/; // name - cost
+    lines.forEach(line => {
+      const match = line.match(regex);
+      if (match) {
+        const name = match[1].trim();
+        const cost = parseFloat(match[2].replace(/,/g, '')) || 0;
+        parsed.push({ name, qty: 1, costPrice: cost });
+      }
+    });
+    return parsed;
+  }
+
+  if (btnParseItems) {
+    btnParseItems.addEventListener('click', () => {
+      const text = bulkListTextarea.value;
+      if (text.trim()) {
+        const parsedItems = parseBulkList(text);
+        if (parsedItems.length) {
+          items = parsedItems;
+          renderItemRows();
+          renderPreview();
+        }
+      }
+    });
+  }
+
   // Reset Form
   btnReset.addEventListener('click', () => {
     items = [];
@@ -464,6 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Load setup
   items = JSON.parse(JSON.stringify(sampleItems));
+  // Initialize profit margin UI
+  if (typeof profitMarginInput !== 'undefined') profitMarginInput.value = profitMargin;
   updateCurrencyPrefixes();
   updateLogoDisplays();
   renderItemRows();
